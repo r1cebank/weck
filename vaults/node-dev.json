@@ -1,0 +1,33 @@
+{
+  "name": "node-dev",
+  "description": "Node.js development workstation setup.",
+  "packages": [
+    {
+      "id": "OpenJS.NodeJS.LTS",
+      "enabled": true,
+      "category": "Node"
+    },
+    {
+      "id": "pnpm.pnpm",
+      "enabled": true,
+      "category": "Node"
+    },
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "enable_long_paths"
+  ],
+  "features": []
+}

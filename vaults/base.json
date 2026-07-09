@@ -1,0 +1,59 @@
+{
+  "name": "base",
+  "description": "Minimal safe developer workstation setup.",
+  "packages": [
+    {
+      "id": "Microsoft.PowerShell",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    },
+    {
+      "id": "7zip.7zip",
+      "enabled": true,
+      "category": "Utility"
+    },
+    {
+      "id": "voidtools.Everything",
+      "enabled": true,
+      "category": "Utility"
+    },
+    {
+      "id": "Microsoft.Sysinternals",
+      "enabled": true,
+      "category": "Utility"
+    },
+    {
+      "id": "GitHub.cli",
+      "enabled": true,
+      "category": "Developer"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "disable_advertising_id",
+    "disable_consumer_features",
+    "disable_suggested_content",
+    "disable_activity_history",
+    "disable_bing_search",
+    "disable_game_dvr",
+    "enable_long_paths"
+  ],
+  "features": []
+}

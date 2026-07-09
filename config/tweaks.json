@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "0.1.0",
+  "tweaks": [
+    {
+      "id": "show_file_extensions",
+      "name": "Show file extensions",
+      "description": "Show known file extensions in File Explorer.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "valueName": "HideFileExt",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "show_hidden_files",
+      "name": "Show hidden files",
+      "description": "Show hidden files and folders in File Explorer.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "valueName": "Hidden",
+      "type": "DWord",
+      "value": 1,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "open_explorer_this_pc",
+      "name": "Open Explorer to This PC",
+      "description": "Open File Explorer to This PC instead of Quick Access.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "valueName": "LaunchTo",
+      "type": "DWord",
+      "value": 1,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_advertising_id",
+      "name": "Disable advertising ID",
+      "description": "Disable the per-user advertising ID.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+      "valueName": "Enabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_consumer_features",
+      "name": "Disable consumer features",
+      "description": "Disable Windows consumer feature suggestions through policy.",
+      "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+      "valueName": "DisableWindowsConsumerFeatures",
+      "type": "DWord",
+      "value": 1,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_suggested_content",
+      "name": "Disable suggested content",
+      "description": "Disable selected suggested content experiences for the current user.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+      "valueName": "SubscribedContent-338389Enabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_activity_history",
+      "name": "Disable activity history",
+      "description": "Disable publishing user activities to Windows Timeline activity history.",
+      "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+      "valueName": "PublishUserActivities",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_bing_search",
+      "name": "Disable Bing web search",
+      "description": "Disable Bing web results in Windows Search for the current user.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+      "valueName": "BingSearchEnabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_game_dvr",
+      "name": "Disable Game DVR",
+      "description": "Disable Game DVR capture for the current user.",
+      "path": "HKCU:\\System\\GameConfigStore",
+      "valueName": "GameDVR_Enabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_edge_startup_boost",
+      "name": "Disable Edge startup boost",
+      "description": "Disable Microsoft Edge startup boost through policy.",
+      "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+      "valueName": "StartupBoostEnabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "disable_edge_background_mode",
+      "name": "Disable Edge background mode",
+      "description": "Disable Microsoft Edge background mode through policy.",
+      "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+      "valueName": "BackgroundModeEnabled",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "enable_long_paths",
+      "name": "Enable long paths",
+      "description": "Enable Win32 long path support.",
+      "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+      "valueName": "LongPathsEnabled",
+      "type": "DWord",
+      "value": 1,
+      "enabledByDefault": true,
+      "reversible": true
+    },
+    {
+      "id": "enable_dark_mode",
+      "name": "Enable dark mode",
+      "description": "Enable dark app and system theme for the current user.",
+      "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      "valueName": "AppsUseLightTheme",
+      "type": "DWord",
+      "value": 0,
+      "enabledByDefault": false,
+      "reversible": true
+    }
+  ]
+}

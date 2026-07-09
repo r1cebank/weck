@@ -1,0 +1,75 @@
+{
+  "name": "wmmd-dev",
+  "description": "Windows workstation for WMMD, MMD, and graphics-engine experimentation.",
+  "packages": [
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    },
+    {
+      "id": "Rustlang.Rustup",
+      "enabled": true,
+      "category": "Rust"
+    },
+    {
+      "id": "Python.Python.3.12",
+      "enabled": true,
+      "category": "Python"
+    },
+    {
+      "id": "Microsoft.VisualStudio.2022.BuildTools",
+      "enabled": true,
+      "category": "Compiler"
+    },
+    {
+      "id": "Microsoft.DotNet.SDK.8",
+      "enabled": true,
+      "category": ".NET"
+    },
+    {
+      "id": "BlenderFoundation.Blender",
+      "enabled": true,
+      "category": "Graphics"
+    },
+    {
+      "id": "Gyan.FFmpeg",
+      "enabled": true,
+      "category": "Media"
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "7zip.7zip",
+      "enabled": true,
+      "category": "Utility"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "disable_advertising_id",
+    "disable_suggested_content",
+    "disable_bing_search",
+    "enable_long_paths"
+  ],
+  "features": [
+    {
+      "name": "Microsoft-Windows-Subsystem-Linux",
+      "enabled": false
+    },
+    {
+      "name": "VirtualMachinePlatform",
+      "enabled": false
+    }
+  ]
+}

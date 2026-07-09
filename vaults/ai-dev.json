@@ -1,0 +1,47 @@
+{
+  "name": "ai-dev",
+  "description": "AI and Python development workstation setup.",
+  "packages": [
+    {
+      "id": "Python.Python.3.12",
+      "enabled": true,
+      "category": "Python"
+    },
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    },
+    {
+      "id": "Docker.DockerDesktop",
+      "enabled": false,
+      "category": "Container"
+    },
+    {
+      "id": "Ollama.Ollama",
+      "enabled": false,
+      "category": "AI"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "enable_long_paths"
+  ],
+  "features": [
+    {
+      "name": "Microsoft-Windows-Subsystem-Linux",
+      "enabled": false
+    },
+    {
+      "name": "VirtualMachinePlatform",
+      "enabled": false
+    }
+  ]
+}

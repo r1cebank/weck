@@ -1,0 +1,53 @@
+{
+  "name": "godot-dev",
+  "description": "Godot game development workstation setup.",
+  "packages": [
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    },
+    {
+      "id": "Python.Python.3.12",
+      "enabled": true,
+      "category": "Python"
+    },
+    {
+      "id": "Microsoft.DotNet.SDK.8",
+      "enabled": true,
+      "category": ".NET"
+    },
+    {
+      "id": "GodotEngine.GodotEngine",
+      "enabled": true,
+      "category": "Game"
+    },
+    {
+      "id": "Gyan.FFmpeg",
+      "enabled": true,
+      "category": "Media"
+    },
+    {
+      "id": "Krita.Krita",
+      "enabled": true,
+      "category": "Art"
+    },
+    {
+      "id": "BlenderFoundation.Blender",
+      "enabled": true,
+      "category": "Graphics"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "enable_long_paths"
+  ],
+  "features": []
+}

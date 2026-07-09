@@ -1,0 +1,33 @@
+{
+  "name": "rust-dev",
+  "description": "Rust development workstation setup.",
+  "packages": [
+    {
+      "id": "Rustlang.Rustup",
+      "enabled": true,
+      "category": "Rust"
+    },
+    {
+      "id": "Microsoft.VisualStudio.2022.BuildTools",
+      "enabled": true,
+      "category": "Compiler"
+    },
+    {
+      "id": "Git.Git",
+      "enabled": true,
+      "category": "Core"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "enabled": true,
+      "category": "Editor"
+    }
+  ],
+  "tweaks": [
+    "show_file_extensions",
+    "show_hidden_files",
+    "open_explorer_this_pc",
+    "enable_long_paths"
+  ],
+  "features": []
+}

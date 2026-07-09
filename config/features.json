@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.1.0",
+  "features": [
+    {
+      "name": "Microsoft-Windows-Subsystem-Linux",
+      "description": "Windows Subsystem for Linux platform support.",
+      "enabledByDefault": false,
+      "requiresRestartLikely": true
+    },
+    {
+      "name": "VirtualMachinePlatform",
+      "description": "Virtual Machine Platform support used by WSL 2 and some virtualization workloads.",
+      "enabledByDefault": false,
+      "requiresRestartLikely": true
+    },
+    {
+      "name": "Microsoft-Hyper-V-All",
+      "description": "Hyper-V platform and management tools.",
+      "enabledByDefault": false,
+      "requiresRestartLikely": true
+    },
+    {
+      "name": "Containers-DisposableClientVM",
+      "description": "Windows Sandbox optional feature.",
+      "enabledByDefault": false,
+      "requiresRestartLikely": true
+    },
+    {
+      "name": "NetFx3",
+      "description": ".NET Framework 3.5 optional feature.",
+      "enabledByDefault": false,
+      "requiresRestartLikely": false
+    }
+  ]
+}

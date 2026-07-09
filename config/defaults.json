@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0",
+  "project": "WECK",
+  "defaultVault": "base",
+  "safety": {
+    "automaticRestart": false,
+    "allowComponentRemoval": false,
+    "allowServiceDisabling": false,
+    "allowUnknownRegistryImports": false
+  },
+  "logging": {
+    "directory": "logs",
+    "filePattern": "weck-yyyyMMdd-HHmmss.log"
+  }
+}
