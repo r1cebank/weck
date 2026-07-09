@@ -3,9 +3,10 @@
     Remote-friendly WECK installer and launcher.
 
 .DESCRIPTION
-    Designed for one-line bootstrap use. It clones or updates the WECK
-    repository, shows a vault menu, and invokes bootstrap.ps1 with the selected
-    vault. Dry-run is the default interactive choice.
+    Designed for one-line bootstrap use. It prepares machine dependencies
+    first, then clones or updates the WECK repository, shows a vault menu, and
+    invokes bootstrap.ps1 with the selected vault. Dry-run is the default
+    interactive choice.
 
 .PARAMETER RepoUrl
     Git repository URL to clone. Defaults to $env:WECK_REPO_URL, then the
@@ -28,7 +29,10 @@
     be used. Defaults to DryRun unless -RunMode is supplied.
 
 .PARAMETER SkipGitInstall
-    Do not offer to install Git with winget when Git is missing.
+    Do not install Git with winget when Git is missing.
+
+.PARAMETER SkipWingetInstall
+    Do not bootstrap winget/App Installer when winget is missing.
 #>
 [CmdletBinding()]
 param(
@@ -39,7 +43,8 @@ param(
     [ValidateSet("DryRun", "Apply", "PackagesOnly", "TweaksOnly", "FeaturesOnly")]
     [string]$RunMode,
     [switch]$NonInteractive,
-    [switch]$SkipGitInstall
+    [switch]$SkipGitInstall,
+    [switch]$SkipWingetInstall
 )
 
 $ErrorActionPreference = "Stop"
@@ -101,6 +106,50 @@ function Test-WeckInstallCommand {
     return ($null -ne (Get-Command -Name $Name -ErrorAction SilentlyContinue))
 }
 
+function Test-WeckInstallWindows {
+    if ($PSVersionTable.PSVersion.Major -le 5) {
+        return $true
+    }
+
+    if ($PSVersionTable.ContainsKey("Platform")) {
+        return ($PSVersionTable.Platform -eq "Win32NT")
+    }
+
+    return $true
+}
+
+function Test-WeckInstallAdministrator {
+    if (-not (Test-WeckInstallWindows)) {
+        return $false
+    }
+
+    try {
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    } catch {
+        return $false
+    }
+}
+
+function Enable-WeckInstallTls12 {
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    } catch {
+        Write-WeckInstallMessage -Level "WARN" -Message ("Unable to force TLS 1.2: {0}" -f $_.Exception.Message)
+    }
+}
+
+function Update-WeckInstallPath {
+    $pathParts = @(
+        [System.Environment]::GetEnvironmentVariable("Path", "Machine"),
+        [System.Environment]::GetEnvironmentVariable("Path", "User"),
+        $env:Path
+    )
+
+    $env:Path = (($pathParts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ";")
+}
+
 function Confirm-WeckInstallPrompt {
     param(
         [string]$Prompt,
@@ -124,30 +173,160 @@ function Confirm-WeckInstallPrompt {
     return ($answer -match "^(y|yes)$")
 }
 
+function Test-WeckWinget {
+    if (-not (Test-WeckInstallCommand -Name "winget")) {
+        return $false
+    }
+
+    try {
+        & winget --version | Out-Null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
+function Register-WeckAppInstallerPackage {
+    if (-not (Test-WeckInstallCommand -Name "Add-AppxPackage")) {
+        return $false
+    }
+
+    try {
+        $existingPackage = Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction SilentlyContinue
+        if ($null -eq $existingPackage) {
+            return $false
+        }
+
+        Write-WeckInstallMessage -Level "INFO" -Message "Registering existing Microsoft Desktop App Installer package."
+        Add-AppxPackage -RegisterByFamilyName -MainPackage "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe" -ErrorAction Stop
+        Update-WeckInstallPath
+        return (Test-WeckWinget)
+    } catch {
+        Write-WeckInstallMessage -Level "WARN" -Message ("Existing App Installer registration failed: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
+function Repair-WeckWingetWithModule {
+    if (-not (Test-WeckInstallCommand -Name "Install-Module")) {
+        Write-WeckInstallMessage -Level "WARN" -Message "Install-Module is unavailable; cannot use Microsoft.WinGet.Client bootstrap path."
+        return $false
+    }
+
+    try {
+        Enable-WeckInstallTls12
+
+        if (Test-WeckInstallCommand -Name "Install-PackageProvider") {
+            Write-WeckInstallMessage -Level "INFO" -Message "Ensuring NuGet package provider is available."
+            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser -ErrorAction Stop | Out-Null
+        }
+
+        Write-WeckInstallMessage -Level "INFO" -Message "Installing Microsoft.WinGet.Client from PowerShell Gallery."
+        Install-Module -Name Microsoft.WinGet.Client -Force -AllowClobber -Repository PSGallery -Scope CurrentUser -ErrorAction Stop
+        Import-Module Microsoft.WinGet.Client -Force -ErrorAction Stop
+
+        Write-WeckInstallMessage -Level "INFO" -Message "Repairing Windows Package Manager."
+        if (Test-WeckInstallAdministrator) {
+            Repair-WinGetPackageManager -AllUsers -ErrorAction Stop
+        } else {
+            Repair-WinGetPackageManager -ErrorAction Stop
+        }
+
+        Update-WeckInstallPath
+        return (Test-WeckWinget)
+    } catch {
+        Write-WeckInstallMessage -Level "WARN" -Message ("Microsoft.WinGet.Client bootstrap failed: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
+function Install-WeckWingetFromAkaMs {
+    if (-not (Test-WeckInstallCommand -Name "Add-AppxPackage")) {
+        Write-WeckInstallMessage -Level "WARN" -Message "Add-AppxPackage is unavailable; cannot install App Installer bundle directly."
+        return $false
+    }
+
+    try {
+        Enable-WeckInstallTls12
+
+        $downloadRoot = Join-Path $env:TEMP "weck-winget"
+        if (-not (Test-Path -LiteralPath $downloadRoot)) {
+            New-Item -ItemType Directory -Path $downloadRoot -Force | Out-Null
+        }
+
+        $bundlePath = Join-Path $downloadRoot "Microsoft.DesktopAppInstaller.msixbundle"
+        Write-WeckInstallMessage -Level "INFO" -Message "Downloading App Installer bundle from https://aka.ms/getwinget."
+        Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile $bundlePath -UseBasicParsing -ErrorAction Stop
+
+        Write-WeckInstallMessage -Level "INFO" -Message "Installing App Installer bundle."
+        Add-AppxPackage -Path $bundlePath -ErrorAction Stop
+        Update-WeckInstallPath
+        return (Test-WeckWinget)
+    } catch {
+        Write-WeckInstallMessage -Level "WARN" -Message ("Direct App Installer install failed: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
+function Ensure-WeckWinget {
+    if (Test-WeckWinget) {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "winget is available."
+        return
+    }
+
+    if ($SkipWingetInstall) {
+        throw "winget is required before WECK can install dependencies, and -SkipWingetInstall was set."
+    }
+
+    if (-not (Test-WeckInstallWindows)) {
+        throw "winget bootstrap requires Windows."
+    }
+
+    if (-not $NonInteractive) {
+        if (-not (Confirm-WeckInstallPrompt -Prompt "winget is missing. Install/repair App Installer now?" -Default $true)) {
+            throw "winget is required before WECK can install dependencies."
+        }
+    }
+
+    Write-WeckInstallMessage -Level "INFO" -Message "Preparing winget/App Installer before cloning WECK."
+
+    if (Register-WeckAppInstallerPackage) {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "winget became available after App Installer registration."
+        return
+    }
+
+    if (Repair-WeckWingetWithModule) {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "winget installed through Microsoft.WinGet.Client repair."
+        return
+    }
+
+    if (Install-WeckWingetFromAkaMs) {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "winget installed from App Installer bundle."
+        return
+    }
+
+    throw "Unable to install winget/App Installer automatically. Install Microsoft App Installer manually, then rerun this script."
+}
+
 function Ensure-WeckGit {
     if (Test-WeckInstallCommand -Name "git") {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "Git is available."
         return
     }
 
     if ($SkipGitInstall) {
-        throw "Git is required to clone WECK and was not found."
+        throw "Git is required before WECK can be cloned, and -SkipGitInstall was set."
     }
 
-    if (-not (Test-WeckInstallCommand -Name "winget")) {
-        throw "Git is required, and winget is not available to install it."
-    }
+    Ensure-WeckWinget
 
-    if ($NonInteractive) {
-        if ($env:WECK_INSTALL_GIT -notmatch "^(1|true|yes)$") {
-            throw "Git is required to clone WECK. In non-interactive mode, set WECK_INSTALL_GIT=1 to allow installing Git with winget."
-        }
-    } else {
+    if (-not $NonInteractive) {
         if (-not (Confirm-WeckInstallPrompt -Prompt "Git is missing. Install Git with winget now?" -Default $true)) {
-            throw "Git is required to clone WECK."
+            throw "Git is required before WECK can be cloned."
         }
     }
 
-    Write-WeckInstallMessage -Level "INFO" -Message "Installing Git with winget."
+    Write-WeckInstallMessage -Level "INFO" -Message "Installing Git with winget before cloning WECK."
     & winget install --id Git.Git --exact --source winget --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -ne 0) {
         throw "winget failed to install Git."
@@ -160,9 +339,13 @@ function Ensure-WeckGit {
     }
 }
 
-function Sync-WeckRepository {
+function Ensure-WeckDependencies {
+    Write-WeckInstallMessage -Level "INFO" -Message "Preparing dependencies before pulling WECK."
+    Ensure-WeckWinget
     Ensure-WeckGit
+}
 
+function Sync-WeckRepository {
     if (Test-Path -LiteralPath $InstallRoot) {
         $gitDirectory = Join-Path $InstallRoot ".git"
         if (-not (Test-Path -LiteralPath $gitDirectory)) {
@@ -345,6 +528,7 @@ try {
     Write-WeckInstallMessage -Level "INFO" -Message "WECK remote launcher started."
     Write-WeckInstallMessage -Level "WARN" -Message "Only run remote scripts from a repository you trust. Prefer reviewing install.ps1 before using iex."
 
+    Ensure-WeckDependencies
     Sync-WeckRepository
 
     $selectedVault = Select-WeckVault

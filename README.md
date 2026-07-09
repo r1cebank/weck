@@ -99,7 +99,7 @@ Administrator privileges are recommended for real runs because some winget insta
 
 ### Remote Launcher
 
-WECK also includes `install.ps1`, a small remote-friendly launcher that clones or updates the repository, shows a vault menu, then invokes `bootstrap.ps1`.
+WECK also includes `install.ps1`, a small remote-friendly launcher that prepares machine dependencies, clones or updates the repository, shows a vault menu, then invokes `bootstrap.ps1`.
 
 Review the script first whenever possible. If you choose to use `iex`, only run it from a URL you control and trust:
 
@@ -114,9 +114,15 @@ $env:WECK_REPO_URL = "https://github.com/r1cebank/weck.git"
 irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
-The launcher defaults to cloning into `%USERPROFILE%\weck`. It prefers `git clone`; if Git is missing and winget is available, it can install Git first after prompting.
+The launcher defaults to cloning into `%USERPROFILE%\weck`. It prepares dependencies before pulling WECK:
 
-Non-interactive dry run:
+- If winget is missing, it tries to register or install Microsoft App Installer / Windows Package Manager.
+- If Git is missing, it installs `Git.Git` with winget.
+- After winget and Git are available, it clones or updates `https://github.com/r1cebank/weck.git`.
+
+This is intended for Windows 11 Enterprise LTSC and IoT Enterprise LTSC images where App Installer, winget, or Git may not be present yet.
+
+Non-interactive dry run with dependency preparation:
 
 ```powershell
 $env:WECK_NONINTERACTIVE = "1"
@@ -125,10 +131,10 @@ $env:WECK_RUN_MODE = "DryRun"
 irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
-In non-interactive mode, Git must already be installed unless you explicitly allow the launcher to install it:
+Skip dependency installation only when preparing dependencies another way:
 
 ```powershell
-$env:WECK_INSTALL_GIT = "1"
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1))) -SkipWingetInstall -SkipGitInstall
 ```
 
 For parameterized use without relying on pipeline `iex`, invoke the downloaded script block directly:
