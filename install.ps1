@@ -45,7 +45,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($RepoUrl)) {
-    $RepoUrl = "https://github.com/siyuangao/weck.git"
+    $RepoUrl = "https://github.com/r1cebank/weck.git"
 }
 
 if ([string]::IsNullOrWhiteSpace($Branch)) {

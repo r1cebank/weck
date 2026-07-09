@@ -104,14 +104,14 @@ WECK also includes `install.ps1`, a small remote-friendly launcher that clones o
 Review the script first whenever possible. If you choose to use `iex`, only run it from a URL you control and trust:
 
 ```powershell
-irm https://raw.githubusercontent.com/siyuangao/weck/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
 If the repository URL changes, set it explicitly for the launcher:
 
 ```powershell
-$env:WECK_REPO_URL = "https://github.com/siyuangao/weck.git"
-irm https://raw.githubusercontent.com/siyuangao/weck/main/install.ps1 | iex
+$env:WECK_REPO_URL = "https://github.com/r1cebank/weck.git"
+irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
 The launcher defaults to cloning into `%USERPROFILE%\weck`. It prefers `git clone`; if Git is missing and winget is available, it can install Git first after prompting.
@@ -122,7 +122,7 @@ Non-interactive dry run:
 $env:WECK_NONINTERACTIVE = "1"
 $env:WECK_VAULT = "base"
 $env:WECK_RUN_MODE = "DryRun"
-irm https://raw.githubusercontent.com/siyuangao/weck/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
 In non-interactive mode, Git must already be installed unless you explicitly allow the launcher to install it:
@@ -134,7 +134,7 @@ $env:WECK_INSTALL_GIT = "1"
 For parameterized use without relying on pipeline `iex`, invoke the downloaded script block directly:
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/siyuangao/weck/main/install.ps1))) -Vault wmmd-dev -RunMode DryRun
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1))) -Vault wmmd-dev -RunMode DryRun
 ```
 
 ## Usage
@@ -290,4 +290,4 @@ Contributions should preserve WECK's safety model:
 
 ## License
 
-License placeholder. Choose and add a project license before distribution.
+WECK is released under the MIT License. See [LICENSE](LICENSE).
