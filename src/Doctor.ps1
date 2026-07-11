@@ -246,7 +246,9 @@ function Invoke-WeckDoctor {
         Add-WeckDoctorCheck -Result $result -Status "BLOCKED" -Name "Registry provider" -Message "Registry provider is required for tweaks."
     }
 
-    if (Test-WeckCommandAvailable -Name "Get-WindowsOptionalFeature" -and Test-WeckCommandAvailable -Name "Enable-WindowsOptionalFeature") {
+    $canReadOptionalFeatures = Test-WeckCommandAvailable -Name "Get-WindowsOptionalFeature"
+    $canEnableOptionalFeatures = Test-WeckCommandAvailable -Name "Enable-WindowsOptionalFeature"
+    if ($canReadOptionalFeatures -and $canEnableOptionalFeatures) {
         Add-WeckDoctorCheck -Result $result -Status "READY" -Name "Optional features" -Message "Windows optional feature commands are available."
     } else {
         Add-WeckDoctorCheck -Result $result -Status "WARN" -Name "Optional features" -Message "Optional feature commands are unavailable; feature phase may need to be skipped."
