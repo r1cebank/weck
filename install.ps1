@@ -33,24 +33,37 @@
 
 .PARAMETER SkipWingetInstall
     Do not bootstrap winget/App Installer when winget is missing.
+
+.PARAMETER InstallerUrl
+    URL used to re-download this launcher when elevation is needed from an
+    iex/pipeline invocation.
+
+.PARAMETER NoAdminRelaunch
+    Do not request UAC elevation before dependency preparation.
 #>
 [CmdletBinding()]
 param(
     [string]$RepoUrl = $env:WECK_REPO_URL,
     [string]$InstallRoot,
     [string]$Branch = $env:WECK_BRANCH,
+    [string]$InstallerUrl = $env:WECK_INSTALLER_URL,
     [string]$Vault,
     [ValidateSet("DryRun", "Apply", "PackagesOnly", "TweaksOnly", "FeaturesOnly")]
     [string]$RunMode,
     [switch]$NonInteractive,
     [switch]$SkipGitInstall,
-    [switch]$SkipWingetInstall
+    [switch]$SkipWingetInstall,
+    [switch]$NoAdminRelaunch
 )
 
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($RepoUrl)) {
     $RepoUrl = "https://github.com/r1cebank/weck.git"
+}
+
+if ([string]::IsNullOrWhiteSpace($InstallerUrl)) {
+    $InstallerUrl = "https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1"
 }
 
 if ([string]::IsNullOrWhiteSpace($Branch)) {
@@ -171,6 +184,101 @@ function Confirm-WeckInstallPrompt {
     }
 
     return ($answer -match "^(y|yes)$")
+}
+
+function ConvertTo-WeckPowerShellArgument {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    return ('"{0}"' -f ($Value -replace '"', '\"'))
+}
+
+function Add-WeckRelaunchArgument {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.ArrayList]$Arguments,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [AllowNull()]
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return
+    }
+
+    [void]$Arguments.Add(("-{0}" -f $Name))
+    [void]$Arguments.Add((ConvertTo-WeckPowerShellArgument -Value $Value))
+}
+
+function Request-WeckAdministrator {
+    if ($NoAdminRelaunch) {
+        Write-WeckInstallMessage -Level "WARN" -Message "Admin relaunch was skipped by request. Dependency preparation may fail."
+        return
+    }
+
+    if (-not (Test-WeckInstallWindows)) {
+        return
+    }
+
+    if (Test-WeckInstallAdministrator) {
+        Write-WeckInstallMessage -Level "SUCCESS" -Message "Administrator privileges are available."
+        return
+    }
+
+    if (-not $NonInteractive) {
+        if (-not (Confirm-WeckInstallPrompt -Prompt "WECK needs administrator privileges to prepare winget, Git, and machine-wide settings. Relaunch elevated now?" -Default $true)) {
+            throw "Administrator privileges are required for dependency preparation."
+        }
+    }
+
+    Enable-WeckInstallTls12
+
+    $launcherPath = $PSCommandPath
+    if ([string]::IsNullOrWhiteSpace($launcherPath) -or -not (Test-Path -LiteralPath $launcherPath)) {
+        $launcherRoot = Join-Path $env:TEMP "weck-launcher"
+        if (-not (Test-Path -LiteralPath $launcherRoot)) {
+            New-Item -ItemType Directory -Path $launcherRoot -Force | Out-Null
+        }
+
+        $launcherPath = Join-Path $launcherRoot "install.ps1"
+        Write-WeckInstallMessage -Level "INFO" -Message ("Downloading elevated launcher from {0}" -f $InstallerUrl)
+        Invoke-WebRequest -Uri $InstallerUrl -OutFile $launcherPath -UseBasicParsing -ErrorAction Stop
+    }
+
+    $arguments = New-Object System.Collections.ArrayList
+    [void]$arguments.Add("-NoProfile")
+    [void]$arguments.Add("-ExecutionPolicy")
+    [void]$arguments.Add("Bypass")
+    [void]$arguments.Add("-File")
+    [void]$arguments.Add((ConvertTo-WeckPowerShellArgument -Value $launcherPath))
+
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "RepoUrl" -Value $RepoUrl
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "InstallRoot" -Value $InstallRoot
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "Branch" -Value $Branch
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "InstallerUrl" -Value $InstallerUrl
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "Vault" -Value $Vault
+    Add-WeckRelaunchArgument -Arguments $arguments -Name "RunMode" -Value $RunMode
+
+    if ($NonInteractive) {
+        [void]$arguments.Add("-NonInteractive")
+    }
+    if ($SkipGitInstall) {
+        [void]$arguments.Add("-SkipGitInstall")
+    }
+    if ($SkipWingetInstall) {
+        [void]$arguments.Add("-SkipWingetInstall")
+    }
+    [void]$arguments.Add("-NoAdminRelaunch")
+
+    Write-WeckInstallMessage -Level "INFO" -Message "Requesting administrator privileges with UAC."
+    Start-Process -FilePath "powershell.exe" -ArgumentList ([string[]]$arguments) -Verb RunAs | Out-Null
+    Write-WeckInstallMessage -Level "INFO" -Message "Elevated WECK launcher started. Continue in the administrator PowerShell window."
+    exit 0
 }
 
 function Test-WeckWinget {
@@ -528,6 +636,7 @@ try {
     Write-WeckInstallMessage -Level "INFO" -Message "WECK remote launcher started."
     Write-WeckInstallMessage -Level "WARN" -Message "Only run remote scripts from a repository you trust. Prefer reviewing install.ps1 before using iex."
 
+    Request-WeckAdministrator
     Ensure-WeckDependencies
     Sync-WeckRepository
 

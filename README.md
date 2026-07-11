@@ -99,7 +99,7 @@ Administrator privileges are recommended for real runs because some winget insta
 
 ### Remote Launcher
 
-WECK also includes `install.ps1`, a small remote-friendly launcher that prepares machine dependencies, clones or updates the repository, shows a vault menu, then invokes `bootstrap.ps1`.
+WECK also includes `install.ps1`, a small remote-friendly launcher that requests administrator privileges, prepares machine dependencies, clones or updates the repository, shows a vault menu, then invokes `bootstrap.ps1`.
 
 Review the script first whenever possible. If you choose to use `iex`, only run it from a URL you control and trust:
 
@@ -113,6 +113,8 @@ If the repository URL changes, set it explicitly for the launcher:
 $env:WECK_REPO_URL = "https://github.com/r1cebank/weck.git"
 irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
+
+The launcher requests UAC elevation before dependency preparation. This is expected: App Installer repair, Git installation, HKLM tweaks, and optional Windows features may need administrator privileges.
 
 The launcher defaults to cloning into `%USERPROFILE%\weck`. It prepares dependencies before pulling WECK:
 
@@ -135,6 +137,12 @@ Skip dependency installation only when preparing dependencies another way:
 
 ```powershell
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1))) -SkipWingetInstall -SkipGitInstall
+```
+
+Skip the UAC relaunch only for inspection or special testing:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1))) -NoAdminRelaunch -RunMode DryRun
 ```
 
 For parameterized use without relying on pipeline `iex`, invoke the downloaded script block directly:
