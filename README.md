@@ -139,6 +139,8 @@ Skip dependency installation only when preparing dependencies another way:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1))) -SkipWingetInstall -SkipGitInstall
 ```
 
+The elevated launcher window stays open by default so dependency-preparation errors remain visible. Add `-CloseOnFinish` if you want the elevated window to close automatically after a successful run.
+
 Skip the UAC relaunch only for inspection or special testing:
 
 ```powershell

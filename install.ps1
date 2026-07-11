@@ -40,6 +40,10 @@
 
 .PARAMETER NoAdminRelaunch
     Do not request UAC elevation before dependency preparation.
+
+.PARAMETER CloseOnFinish
+    Close the elevated launcher window after it finishes. By default, elevated
+    relaunches stay open so LTSC dependency errors remain visible.
 #>
 [CmdletBinding()]
 param(
@@ -48,12 +52,12 @@ param(
     [string]$Branch = $env:WECK_BRANCH,
     [string]$InstallerUrl = $env:WECK_INSTALLER_URL,
     [string]$Vault,
-    [ValidateSet("DryRun", "Apply", "PackagesOnly", "TweaksOnly", "FeaturesOnly")]
     [string]$RunMode,
     [switch]$NonInteractive,
     [switch]$SkipGitInstall,
     [switch]$SkipWingetInstall,
-    [switch]$NoAdminRelaunch
+    [switch]$NoAdminRelaunch,
+    [switch]$CloseOnFinish
 )
 
 $ErrorActionPreference = "Stop"
@@ -215,6 +219,37 @@ function Add-WeckRelaunchArgument {
     [void]$Arguments.Add((ConvertTo-WeckPowerShellArgument -Value $Value))
 }
 
+function Get-WeckPowerShellExecutable {
+    $candidates = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($PSHOME)) {
+        $candidates += (Join-Path $PSHOME "powershell.exe")
+        $candidates += (Join-Path $PSHOME "pwsh.exe")
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:SystemRoot)) {
+        $candidates += (Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe")
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+
+    $command = Get-Command -Name "powershell.exe" -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    $command = Get-Command -Name "pwsh.exe" -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    throw "Unable to find powershell.exe for elevated relaunch."
+}
+
 function Request-WeckAdministrator {
     if ($NoAdminRelaunch) {
         Write-WeckInstallMessage -Level "WARN" -Message "Admin relaunch was skipped by request. Dependency preparation may fail."
@@ -250,7 +285,11 @@ function Request-WeckAdministrator {
         Invoke-WebRequest -Uri $InstallerUrl -OutFile $launcherPath -UseBasicParsing -ErrorAction Stop
     }
 
+    $powerShellPath = Get-WeckPowerShellExecutable
     $arguments = New-Object System.Collections.ArrayList
+    if (-not $CloseOnFinish) {
+        [void]$arguments.Add("-NoExit")
+    }
     [void]$arguments.Add("-NoProfile")
     [void]$arguments.Add("-ExecutionPolicy")
     [void]$arguments.Add("Bypass")
@@ -274,9 +313,17 @@ function Request-WeckAdministrator {
         [void]$arguments.Add("-SkipWingetInstall")
     }
     [void]$arguments.Add("-NoAdminRelaunch")
+    if ($CloseOnFinish) {
+        [void]$arguments.Add("-CloseOnFinish")
+    }
 
     Write-WeckInstallMessage -Level "INFO" -Message "Requesting administrator privileges with UAC."
-    Start-Process -FilePath "powershell.exe" -ArgumentList ([string[]]$arguments) -Verb RunAs | Out-Null
+    try {
+        Start-Process -FilePath $powerShellPath -ArgumentList ([string[]]$arguments) -Verb RunAs -ErrorAction Stop | Out-Null
+    } catch {
+        throw "UAC relaunch failed: $($_.Exception.Message)"
+    }
+
     Write-WeckInstallMessage -Level "INFO" -Message "Elevated WECK launcher started. Continue in the administrator PowerShell window."
     exit 0
 }
