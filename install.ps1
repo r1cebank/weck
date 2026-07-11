@@ -22,7 +22,7 @@
     Optional vault name to skip the interactive vault picker.
 
 .PARAMETER RunMode
-    Optional run mode: DryRun, Apply, PackagesOnly, TweaksOnly, or FeaturesOnly.
+    Optional run mode: Doctor, DryRun, Apply, PackagesOnly, TweaksOnly, or FeaturesOnly.
 
 .PARAMETER NonInteractive
     Runs without prompts. Requires -Vault unless the repository default should
@@ -601,7 +601,7 @@ function Select-WeckVault {
 }
 
 function Select-WeckRunMode {
-    $validRunModes = @("DryRun", "Apply", "PackagesOnly", "TweaksOnly", "FeaturesOnly")
+    $validRunModes = @("Doctor", "DryRun", "Apply", "PackagesOnly", "TweaksOnly", "FeaturesOnly")
 
     if (-not [string]::IsNullOrWhiteSpace($RunMode)) {
         if ($validRunModes -notcontains $RunMode) {
@@ -617,24 +617,26 @@ function Select-WeckRunMode {
 
     Write-Host ""
     Write-Host "Choose what to run:" -ForegroundColor Cyan
-    Write-Host "  1. Dry run all phases (recommended first)"
-    Write-Host "  2. Apply all phases"
-    Write-Host "  3. Dry run packages only"
-    Write-Host "  4. Dry run tweaks only"
-    Write-Host "  5. Dry run features only"
+    Write-Host "  1. Doctor / preflight checks"
+    Write-Host "  2. Dry run all phases (recommended before apply)"
+    Write-Host "  3. Apply all phases"
+    Write-Host "  4. Dry run packages only"
+    Write-Host "  5. Dry run tweaks only"
+    Write-Host "  6. Dry run features only"
 
     while ($true) {
         $choice = Read-Host "Run mode"
         switch ($choice) {
-            "1" { return "DryRun" }
-            "2" {
+            "1" { return "Doctor" }
+            "2" { return "DryRun" }
+            "3" {
                 if (Confirm-WeckInstallPrompt -Prompt "This will install packages and apply selected changes. Continue?" -Default $false) {
                     return "Apply"
                 }
             }
-            "3" { return "PackagesOnly" }
-            "4" { return "TweaksOnly" }
-            "5" { return "FeaturesOnly" }
+            "4" { return "PackagesOnly" }
+            "5" { return "TweaksOnly" }
+            "6" { return "FeaturesOnly" }
             default {
                 Write-WeckInstallMessage -Level "WARN" -Message "Choose a number from the menu."
             }
@@ -656,6 +658,9 @@ function Invoke-WeckBootstrapFromInstaller {
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $bootstrapPath, "-Vault", $SelectedVault, "-NoRestart")
 
     switch ($SelectedRunMode) {
+        "Doctor" {
+            $arguments += "-Doctor"
+        }
         "DryRun" {
             $arguments += "-DryRun"
         }

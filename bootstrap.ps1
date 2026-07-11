@@ -26,6 +26,9 @@
 
 .PARAMETER NoRestart
     Prevents automatic restarts. WECK v0.1 never restarts automatically.
+
+.PARAMETER Doctor
+    Runs preflight checks only and does not apply packages, tweaks, or features.
 #>
 [CmdletBinding()]
 param(
@@ -35,7 +38,8 @@ param(
     [switch]$SkipFeatures,
     [string]$ConfigPath,
     [string]$Vault = "base",
-    [switch]$NoRestart
+    [switch]$NoRestart,
+    [switch]$Doctor
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +55,7 @@ $Script:WeckRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $Script:WeckRoot "src/Packages.ps1")
 . (Join-Path $Script:WeckRoot "src/Tweaks.ps1")
 . (Join-Path $Script:WeckRoot "src/Features.ps1")
+. (Join-Path $Script:WeckRoot "src/Doctor.ps1")
 
 function New-WeckEmptyResult {
     param(
@@ -95,6 +100,17 @@ try {
 
     $tweakDefinitions = Import-WeckJsonFile -Path (Join-Path $resolvedConfigPath "tweaks.json")
     $featureDefinitions = Import-WeckJsonFile -Path (Join-Path $resolvedConfigPath "features.json")
+
+    if ($Doctor) {
+        $doctorResult = Invoke-WeckDoctor -Environment $environment -Vault $selectedVault -TweakDefinitions $tweakDefinitions -FeatureDefinitions $featureDefinitions
+        if ($doctorResult.Blocked -gt 0) {
+            Write-WeckLog -Level "ERROR" -Message ("Doctor found {0} blocked check(s). Resolve blocked items before applying WECK." -f $doctorResult.Blocked)
+            exit 2
+        }
+
+        Write-WeckLog -Level "SUCCESS" -Message "Doctor checks completed without blockers."
+        exit 0
+    }
 
     if ($SkipPackages) {
         Write-WeckLog -Level "WARN" -Message "Package phase skipped by request."

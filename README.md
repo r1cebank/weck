@@ -133,6 +133,15 @@ $env:WECK_RUN_MODE = "DryRun"
 irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
 ```
 
+Non-interactive doctor/preflight:
+
+```powershell
+$env:WECK_NONINTERACTIVE = "1"
+$env:WECK_VAULT = "base"
+$env:WECK_RUN_MODE = "Doctor"
+irm https://raw.githubusercontent.com/r1cebank/weck/main/install.ps1 | iex
+```
+
 Skip dependency installation only when preparing dependencies another way:
 
 ```powershell
@@ -189,6 +198,7 @@ Use a vault JSON file by path:
 
 `bootstrap.ps1` supports:
 
+- `-Doctor`: run preflight checks only and do not apply packages, tweaks, or features
 - `-DryRun`: print planned actions without changing the system
 - `-SkipPackages`: skip winget package handling
 - `-SkipTweaks`: skip registry and policy tweaks
@@ -276,17 +286,21 @@ Prefer readable, explicit code over clever one-liners. Public functions should i
 Recommended non-mutating checks:
 
 ```powershell
+.\bootstrap.ps1 -Doctor -Vault base
 .\bootstrap.ps1 -DryRun -Vault base
 .\bootstrap.ps1 -DryRun -Vault wmmd-dev -SkipFeatures
 .\bootstrap.ps1 -DryRun -Vault godot-dev -SkipPackages
 ```
 
+`-Doctor` exits with code `2` when blocked checks are found, and `0` when no blockers are present.
+
 On a fresh Windows 11 ARM64 VM in Parallels:
 
-1. Run `.\bootstrap.ps1 -DryRun -Vault base`.
-2. Review console output and `logs/`.
-3. Run `.\bootstrap.ps1 -Vault base`.
-4. Run `.\bootstrap.ps1 -Vault base` again to confirm idempotency.
+1. Run `.\bootstrap.ps1 -Doctor -Vault base`.
+2. Run `.\bootstrap.ps1 -DryRun -Vault base`.
+3. Review console output and `logs/`.
+4. Run `.\bootstrap.ps1 -Vault base`.
+5. Run `.\bootstrap.ps1 -Vault base` again to confirm idempotency.
 
 ## Roadmap
 
